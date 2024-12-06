@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/samyoglamsal/advent2024/day5"
+	"github.com/samyoglamsal/advent2024/day6"
 )
 
 func main() {
@@ -16,5 +16,7 @@ func main() {
 
 	// day4.Gilver()
 
-	day5.Gilver()
+	// day5.Gilver()
+	day6.Silver()
+	day6.Gold()
 }

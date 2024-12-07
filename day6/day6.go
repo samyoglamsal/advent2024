@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sync"
 	"time"
 )
 
@@ -51,6 +52,33 @@ func (g *guard) move(grid [][]rune) {
 
 	g.pos.x += g.dir.dx
 	g.pos.y += g.dir.dy
+}
+
+func loopCheck(grid [][]rune, pos position, start position, c chan int, wg sync.WaitGroup) {
+	if grid[pos.y][pos.x] == EMPTY {
+		grid[pos.y][pos.x] = OBSTACLE
+
+		g := guard{pos: position{x: start.x, y: start.y}, dir: direction{0, -1}}
+		visited := make(map[guard]bool)
+		visited[g] = true
+
+		for {
+			g.move(grid)
+			if g.outOfBounds(len(grid)) {
+				break
+			}
+
+			if visited[g] {
+				c <- 1
+			} else {
+				visited[g] = true
+			}
+		}
+
+		grid[pos.y][pos.x] = EMPTY
+	}
+
+	c <- 0
 }
 
 func Silver() []position {
@@ -114,46 +142,38 @@ func Gold() {
 
 	// silver := 0
 	scanner := bufio.NewScanner(file)
-	var startX, startY int
+	var startPosition position
 	for scanner.Scan() {
 		line := []rune(scanner.Text())
 		grid = append(grid, line)
 
 		if slices.Contains(line, '^') {
-			startX = slices.Index(line, '^')
-			startY = len(grid)
+			startPosition = position{slices.Index(line, '^'), len(grid)}
 		}
 	}
 
 	positions := Silver()
 
 	gold := 0
+	c := make(chan int)
+	var wg sync.WaitGroup
+
 	for _, pos := range positions {
 		if grid[pos.y][pos.x] == OBSTACLE || grid[pos.y][pos.x] == GUARD {
 			continue
 		} else {
-			grid[pos.y][pos.x] = OBSTACLE
-
-			g := guard{pos: position{x: startX, y: startY}, dir: direction{0, -1}}
-			visited := make(map[guard]bool)
-			visited[g] = true
-
-			for {
-				g.move(grid)
-				if g.outOfBounds(len(grid)) {
-					break
-				}
-
-				if visited[g] {
-					gold += 1
-					break
-				} else {
-					visited[g] = true
-				}
-			}
-
-			grid[pos.y][pos.x] = EMPTY
+			wg.Add(1)
+			go loopCheck(grid, pos, startPosition, c, wg)
 		}
+	}
+
+	for {
+		select {
+		case x := <-c:
+			gold += x
+		case 
+		}
+
 	}
 
 	fmt.Println("Gold: ", gold)

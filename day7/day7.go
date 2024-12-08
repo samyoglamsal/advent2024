@@ -12,12 +12,7 @@ func bruteForce(target int, current int, inputs []int, gold bool) bool {
 	if len(inputs) == 0 {
 		return current == target
 	} else {
-		result := bruteForce(target, current+inputs[0], inputs[1:], gold) || bruteForce(target, current*inputs[0], inputs[1:], gold)
-		if !gold {
-			return result
-		} else {
-			return result || bruteForce(target, concat(current, inputs[0]), inputs[1:], gold)
-		}
+		return bruteForce(target, current+inputs[0], inputs[1:], gold) || bruteForce(target, current*inputs[0], inputs[1:], gold) || (gold && bruteForce(target, concat(current, inputs[0]), inputs[1:], gold))
 	}
 }
 
@@ -37,7 +32,7 @@ func concat(a, b int) int {
 	return result + b
 }
 
-func Gilver() {
+func solve() {
 	file, err := os.Open("inputs/day7.txt")
 	if err != nil {
 		panic(err)

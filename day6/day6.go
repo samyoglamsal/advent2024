@@ -54,7 +54,9 @@ func (g *guard) move(grid [][]rune) {
 	g.pos.y += g.dir.dy
 }
 
-func loopCheck(grid [][]rune, pos position, start position, c chan int, wg sync.WaitGroup) {
+func loopCheck(grid [][]rune, pos position, start position, counter *int, wg *sync.WaitGroup, m *sync.Mutex) {
+	defer wg.Done()
+
 	if grid[pos.y][pos.x] == EMPTY {
 		grid[pos.y][pos.x] = OBSTACLE
 
@@ -69,7 +71,10 @@ func loopCheck(grid [][]rune, pos position, start position, c chan int, wg sync.
 			}
 
 			if visited[g] {
-				c <- 1
+				m.Lock()
+				*counter += 1
+				m.Unlock()
+				break
 			} else {
 				visited[g] = true
 			}
@@ -77,8 +82,6 @@ func loopCheck(grid [][]rune, pos position, start position, c chan int, wg sync.
 
 		grid[pos.y][pos.x] = EMPTY
 	}
-
-	c <- 0
 }
 
 func Silver() []position {
@@ -155,26 +158,24 @@ func Gold() {
 	positions := Silver()
 
 	gold := 0
-	c := make(chan int)
 	var wg sync.WaitGroup
+	var m sync.Mutex
 
 	for _, pos := range positions {
 		if grid[pos.y][pos.x] == OBSTACLE || grid[pos.y][pos.x] == GUARD {
 			continue
 		} else {
+			cpy := make([][]rune, len(grid))
+			for i := range grid {
+				cpy[i] = make([]rune, len(grid[i]))
+				copy(cpy[i], grid[i])
+			}
+
 			wg.Add(1)
-			go loopCheck(grid, pos, startPosition, c, wg)
+			go loopCheck(cpy, pos, startPosition, &gold, &wg, &m)
 		}
 	}
 
-	for {
-		select {
-		case x := <-c:
-			gold += x
-		case 
-		}
-
-	}
-
+	wg.Wait()
 	fmt.Println("Gold: ", gold)
 }

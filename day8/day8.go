@@ -1,11 +1,9 @@
 package day8
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 
-	"github.com/samyoglamsal/advent2024/util"
+	. "github.com/samyoglamsal/advent2024/util"
 )
 
 const (
@@ -13,90 +11,77 @@ const (
 )
 
 func Gilver() {
-	file, err := os.Open("inputs/day8.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
+	lines := ReadInput("inputs/day8.txt")
 
-	sideLength := 0
-	antennas := make(map[rune][]util.Position)
-	silverAntinodes := make(map[util.Position]bool)
-	goldAntinodes := make(map[util.Position]bool)
+	sideLength := len(lines)
+	antennas := make(map[rune][]Position)
+	silverAntinodes := make(map[Position]bool)
+	goldAntinodes := make(map[Position]bool)
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		input := []rune(scanner.Text())
-
-		for i, c := range input {
+	for i, line := range lines {
+		for j, c := range line {
 			if c != EMPTY {
 				if antennas[c] == nil {
-					antennas[c] = make([]util.Position, 0)
+					antennas[c] = make([]Position, 0)
 				}
-				antennas[c] = append(antennas[c], util.Position{X: i, Y: sideLength})
+				antennas[c] = append(antennas[c], Position{X: j, Y: i})
 			}
 		}
-		sideLength += 1
 	}
 
 	for _, signal := range antennas {
 		for i := 0; i < len(signal)-1; i++ {
 			for j := i + 1; j < len(signal); j++ {
-				var closeAntinodes, farAntinodes []util.Position
-				closeInBounds, farInBounds := true, true
+				distance := Position{X: signal[i].X - signal[j].X, Y: signal[i].Y - signal[j].Y}
 
-				distance := util.Position{X: signal[i].X - signal[j].X, Y: signal[i].Y - signal[j].Y}
-				if signal[i].X+distance.X == signal[j].X && signal[i].Y+distance.Y == signal[j].Y {
-					for k := 0; closeInBounds; k++ {
-						closeAntinode := util.Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
-						if closeAntinode.OutOfBounds(sideLength) {
-							closeInBounds = false
-						} else {
-							closeAntinodes = append(closeAntinodes, closeAntinode)
+				for k := 0; ; k++ {
+					if signal[i].X+distance.X == signal[j].X && signal[i].Y+distance.Y == signal[j].Y {
+						closeAntinode := Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
+						farAntinode := Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
+
+						if !closeAntinode.OutOfBounds(sideLength) {
+							goldAntinodes[closeAntinode] = true
+
+							if k == 1 {
+								silverAntinodes[closeAntinode] = true
+							}
 						}
-					}
 
-					for k := 0; farInBounds; k++ {
-						farAntinode := util.Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
-						if farAntinode.OutOfBounds(sideLength) {
-							farInBounds = false
-						} else {
-							farAntinodes = append(farAntinodes, farAntinode)
+						if !farAntinode.OutOfBounds(sideLength) {
+							goldAntinodes[farAntinode] = true
+
+							if k == 2 {
+								silverAntinodes[farAntinode] = true
+							}
 						}
-					}
-				} else if signal[i].X-distance.X == signal[j].X && signal[i].Y-distance.Y == signal[j].Y {
-					for k := 0; closeInBounds; k++ {
-						closeAntinode := util.Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
-						if closeAntinode.OutOfBounds(sideLength) {
-							closeInBounds = false
-						} else {
-							closeAntinodes = append(closeAntinodes, closeAntinode)
+
+						if farAntinode.OutOfBounds(sideLength) && closeAntinode.OutOfBounds(sideLength) {
+							break
 						}
-					}
 
-					for k := 0; farInBounds; k++ {
-						farAntinode := util.Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
-						if farAntinode.OutOfBounds(sideLength) {
-							farInBounds = false
-						} else {
-							farAntinodes = append(farAntinodes, farAntinode)
+					} else if signal[i].X-distance.X == signal[j].X && signal[i].Y-distance.Y == signal[j].Y {
+						closeAntinode := Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
+						farAntinode := Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
+
+						if !closeAntinode.OutOfBounds(sideLength) {
+							goldAntinodes[closeAntinode] = true
+
+							if k == 1 {
+								silverAntinodes[closeAntinode] = true
+							}
 						}
-					}
-				}
 
-				for i, closeAntinode := range closeAntinodes {
-					goldAntinodes[closeAntinode] = true
+						if !farAntinode.OutOfBounds(sideLength) {
+							goldAntinodes[farAntinode] = true
 
-					if i == 0 {
-						silverAntinodes[closeAntinode] = true
-					}
-				}
+							if k == 2 {
+								silverAntinodes[farAntinode] = true
+							}
+						}
 
-				for i, farAntinode := range farAntinodes {
-					goldAntinodes[farAntinode] = true
-
-					if i == 0 {
-						silverAntinodes[farAntinode] = true
+						if farAntinode.OutOfBounds(sideLength) && closeAntinode.OutOfBounds(sideLength) {
+							break
+						}
 					}
 				}
 			}

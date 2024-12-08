@@ -7,6 +7,8 @@ import (
 	"slices"
 	"sync"
 	"time"
+
+	. "github.com/samyoglamsal/advent2024/util"
 )
 
 const (
@@ -28,11 +30,6 @@ type direction struct {
 type guard struct {
 	pos position
 	dir direction
-}
-
-func measureExecutionTime(start time.Time, name string) {
-	elapsed := time.Since(start)
-	fmt.Printf("%s took %s\n", name, elapsed)
 }
 
 func (g guard) outOfBounds(sideLength int) bool {
@@ -86,7 +83,7 @@ func loopCheck(grid [][]rune, pos position, start position, counter *int, wg *sy
 
 func Silver() []position {
 	start := time.Now()
-	defer measureExecutionTime(start, "silver")
+	defer MeasureExecutionTime(start, "silver")
 
 	file, err := os.Open("inputs/day6.txt")
 	if err != nil {
@@ -133,7 +130,7 @@ func Silver() []position {
 
 func Gold() {
 	start := time.Now()
-	defer measureExecutionTime(start, "gold")
+	defer MeasureExecutionTime(start, "gold")
 
 	file, err := os.Open("inputs/day6.txt")
 	if err != nil {

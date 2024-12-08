@@ -2,6 +2,7 @@ package day8
 
 import (
 	"fmt"
+	"time"
 
 	. "github.com/samyoglamsal/advent2024/util"
 )
@@ -11,6 +12,9 @@ const (
 )
 
 func Gilver() {
+	start := time.Now()
+	defer MeasureExecutionTime(start, "Gilver")
+
 	lines := ReadInput("inputs/day8.txt")
 
 	sideLength := len(lines)
@@ -32,56 +36,33 @@ func Gilver() {
 	for _, signal := range antennas {
 		for i := 0; i < len(signal)-1; i++ {
 			for j := i + 1; j < len(signal); j++ {
-				distance := Position{X: signal[i].X - signal[j].X, Y: signal[i].Y - signal[j].Y}
+				distance := signal[i].Subtract(signal[j])
 
 				for k := 0; ; k++ {
-					if signal[i].X+distance.X == signal[j].X && signal[i].Y+distance.Y == signal[j].Y {
-						closeAntinode := Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
-						farAntinode := Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
+					closeAntinode := signal[i].NSubtract(distance, k)
+					farAntinode := signal[i].NAdd(distance, k)
+					if signal[i].Subtract(distance).Equals(signal[j]) {
+						closeAntinode, farAntinode = farAntinode, closeAntinode
+					}
 
-						if !closeAntinode.OutOfBounds(sideLength) {
-							goldAntinodes[closeAntinode] = true
+					if !closeAntinode.OutOfBounds(sideLength) {
+						goldAntinodes[closeAntinode] = true
 
-							if k == 1 {
-								silverAntinodes[closeAntinode] = true
-							}
+						if k == 1 {
+							silverAntinodes[closeAntinode] = true
 						}
+					}
 
-						if !farAntinode.OutOfBounds(sideLength) {
-							goldAntinodes[farAntinode] = true
+					if !farAntinode.OutOfBounds(sideLength) {
+						goldAntinodes[farAntinode] = true
 
-							if k == 2 {
-								silverAntinodes[farAntinode] = true
-							}
+						if k == 2 {
+							silverAntinodes[farAntinode] = true
 						}
+					}
 
-						if farAntinode.OutOfBounds(sideLength) && closeAntinode.OutOfBounds(sideLength) {
-							break
-						}
-
-					} else if signal[i].X-distance.X == signal[j].X && signal[i].Y-distance.Y == signal[j].Y {
-						closeAntinode := Position{X: signal[i].X + k*distance.X, Y: signal[i].Y + k*distance.Y}
-						farAntinode := Position{X: signal[i].X - k*distance.X, Y: signal[i].Y - k*distance.Y}
-
-						if !closeAntinode.OutOfBounds(sideLength) {
-							goldAntinodes[closeAntinode] = true
-
-							if k == 1 {
-								silverAntinodes[closeAntinode] = true
-							}
-						}
-
-						if !farAntinode.OutOfBounds(sideLength) {
-							goldAntinodes[farAntinode] = true
-
-							if k == 2 {
-								silverAntinodes[farAntinode] = true
-							}
-						}
-
-						if farAntinode.OutOfBounds(sideLength) && closeAntinode.OutOfBounds(sideLength) {
-							break
-						}
+					if farAntinode.OutOfBounds(sideLength) && closeAntinode.OutOfBounds(sideLength) {
+						break
 					}
 				}
 			}
